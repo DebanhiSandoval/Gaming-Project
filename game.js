@@ -3,9 +3,10 @@
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
 const scoreEl = document.getElementById('score');
-const timerEl = document.getElementById('timer');
+// Timer removed
 const startBtn = document.getElementById('start-btn');
 const endMessage = document.getElementById('end-message');
+const livesEl = document.getElementById('lives');
 
 const GAME_WIDTH = canvas.width;
 const GAME_HEIGHT = canvas.height;
@@ -14,14 +15,16 @@ const PLAYER_HEIGHT = 30;
 const OBJECT_RADIUS = 18;
 const OBJECT_FALL_SPEED = 4;
 const OBSTACLE_FALL_SPEED = 5;
-const GAME_TIME = 30; // seconds
+// const GAME_TIME = 30; // seconds (removed)
+const MAX_LIVES = 3;
 
 let playerX = GAME_WIDTH / 2 - PLAYER_WIDTH / 2;
 let playerY = GAME_HEIGHT - PLAYER_HEIGHT - 10;
 let leftPressed = false;
 let rightPressed = false;
 let score = 0;
-let timer = GAME_TIME;
+// let timer = GAME_TIME; (removed)
+let lives = MAX_LIVES;
 let gameInterval, timerInterval;
 let objects = [];
 let gameActive = false;
@@ -29,10 +32,12 @@ let gameActive = false;
 function resetGame() {
   playerX = GAME_WIDTH / 2 - PLAYER_WIDTH / 2;
   score = 0;
-  timer = GAME_TIME;
+  // timer = GAME_TIME; (removed)
+  lives = MAX_LIVES;
   objects = [];
   scoreEl.textContent = 'Score: 0';
-  timerEl.textContent = 'Time: ' + GAME_TIME;
+  // timerEl.textContent = 'Time: ' + GAME_TIME; (removed)
+  livesEl.textContent = 'Lives: ' + MAX_LIVES;
   endMessage.style.display = 'none';
 }
 
@@ -77,15 +82,21 @@ function spawnObject() {
 }
 
 function moveObjects() {
-  for (let obj of objects) {
+  for (let i = objects.length - 1; i >= 0; i--) {
+    const obj = objects[i];
     if (obj.type === 'water') {
       obj.y += OBJECT_FALL_SPEED;
     } else {
       obj.y += OBSTACLE_FALL_SPEED;
     }
+    // If water droplet missed (falls off screen), just remove it (no lives lost)
+    if (obj.type === 'water' && obj.y > GAME_HEIGHT + OBJECT_RADIUS) {
+      objects.splice(i, 1);
+    } else if (obj.y > GAME_HEIGHT + OBJECT_RADIUS) {
+      // Remove obstacles that fall off screen
+      objects.splice(i, 1);
+    }
   }
-  // Remove objects that are off screen
-  objects = objects.filter(obj => obj.y < GAME_HEIGHT + OBJECT_RADIUS);
 }
 
 function checkCollisions() {
@@ -101,8 +112,11 @@ function checkCollisions() {
         score += 1;
         scoreEl.textContent = 'Score: ' + score;
       } else {
-        score -= 1;
-        scoreEl.textContent = 'Score: ' + score;
+        lives -= 1;
+        livesEl.textContent = 'Lives: ' + lives;
+        if (lives <= 0) {
+          endGame();
+        }
       }
       objects.splice(i, 1);
     }
@@ -126,18 +140,19 @@ function gameLoop() {
 }
 
 function updateTimer() {
-  timer -= 1;
-  timerEl.textContent = 'Time: ' + timer;
-  if (timer <= 0) {
-    endGame();
-  }
+  // Timer update logic removed
 }
 
 function endGame() {
   gameActive = false;
   clearInterval(gameInterval);
-  clearInterval(timerInterval);
-  endMessage.innerHTML = `<strong>Game Over!</strong><br>Your score: ${score}<br><br>Every drop counts! Thanks for playing and supporting <a href='https://www.charitywater.org/' target='_blank'>charity: water</a>.`;
+  // clearInterval(timerInterval); (removed)
+  let message = `<strong>Game Over!</strong><br>Your score: ${score}<br>`;
+  if (lives <= 0) {
+    message += 'You ran out of lives!<br>';
+  }
+  message += '<br>Every drop counts! Thanks for playing and supporting <a href="https://www.charitywater.org/" target="_blank">charity: water</a>.';
+  endMessage.innerHTML = message;
   endMessage.style.display = 'block';
   startBtn.textContent = 'Restart Game';
 }
@@ -147,7 +162,7 @@ function startGame() {
   gameActive = true;
   startBtn.textContent = 'Restart Game';
   gameInterval = setInterval(gameLoop, 20);
-  timerInterval = setInterval(updateTimer, 1000);
+  // timerInterval = setInterval(updateTimer, 1000); (removed)
 }
 
 startBtn.addEventListener('click', () => {
@@ -171,3 +186,24 @@ function movePlayer() {
 }
 
 setInterval(movePlayer, 20);
+
+const bgImage = new Image();
+bgImage.src = 'Pictures/Background Game.jpg';
+
+function draw() {
+  ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+  ctx.drawImage(bgImage, 0, 0, GAME_WIDTH, GAME_HEIGHT);
+  drawPlayer();
+  for (let obj of objects) {
+    drawObject(obj);
+  }
+}
+
+const bucketImg = new Image();
+bucketImg.src = 'Pictures/Bucket.png';
+
+function drawPlayer() {
+  const bucketWidth = 70;  // e.g., 70 pixels wide
+  const bucketHeight = 40; // e.g., 40 pixels tall
+  ctx.drawImage(bucketImg, playerX, playerY, bucketWidth, bucketHeight);
+}
