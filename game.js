@@ -200,10 +200,55 @@ function draw() {
 }
 
 const bucketImg = new Image();
-bucketImg.src = 'Pictures/Bucket.png';
+bucketImg.src = 'Pictures/Bucket.png'; // Make sure the filename matches your image
 
 function drawPlayer() {
-  const bucketWidth = 70;  // e.g., 70 pixels wide
-  const bucketHeight = 40; // e.g., 40 pixels tall
-  ctx.drawImage(bucketImg, playerX, playerY, bucketWidth, bucketHeight);
+  ctx.drawImage(bucketImg, playerX, playerY, PLAYER_WIDTH, PLAYER_HEIGHT);
 }
+
+const waterImg = new Image();
+waterImg.src = 'Pictures/raindrop.png'; // Make sure this matches your image path and name
+let waterLoaded = false;
+waterImg.onload = function() {
+  waterLoaded = true;
+};
+
+const obstacleImg = new Image();
+obstacleImg.src = 'Pictures/poonew.png'; // Make sure this matches your image path and name
+let obstacleLoaded = false;
+obstacleImg.onload = function() {
+  obstacleLoaded = true;
+};
+
+function drawObject(obj) {
+  if (obj.type === 'water') {
+    if (waterLoaded) {
+      ctx.drawImage(waterImg, obj.x - OBJECT_RADIUS, obj.y - OBJECT_RADIUS, OBJECT_RADIUS * 2, OBJECT_RADIUS * 2);
+    } else {
+      ctx.beginPath();
+      ctx.arc(obj.x, obj.y, OBJECT_RADIUS, 0, Math.PI * 2);
+      ctx.fillStyle = '#00bcd4';
+      ctx.fill();
+      ctx.strokeStyle = '#0288d1';
+      ctx.stroke();
+      ctx.closePath();
+    }
+  } else {
+    // Draw obstacle as image if loaded, else fallback to gray circle with X
+    if (obstacleLoaded) {
+      ctx.drawImage(obstacleImg, obj.x - OBJECT_RADIUS, obj.y - OBJECT_RADIUS, OBJECT_RADIUS * 2, OBJECT_RADIUS * 2);
+    } else {
+      ctx.beginPath();
+      ctx.arc(obj.x, obj.y, OBJECT_RADIUS, 0, Math.PI * 2);
+      ctx.fillStyle = '#757575';
+      ctx.fill();
+      ctx.strokeStyle = '#424242';
+      ctx.stroke();
+      ctx.closePath();
+      ctx.font = '16px Arial';
+      ctx.fillStyle = '#fff';
+      ctx.fillText('X', obj.x - 6, obj.y + 6);
+    }
+  }
+}
+
